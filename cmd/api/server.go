@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"github.com/aashishdubey1/catalog-service/internal/db"
+	"github.com/aashishdubey1/catalog-service/internal/product"
+	"github.com/go-chi/chi/v5"
 )
 
 func main() {
@@ -14,10 +16,17 @@ func main() {
 		return
 	}
 
-	db.CreateTables(conn)
-	db.SeedProducts(conn)
+	// do once
+	// db.CreateTables(conn)
+	// db.SeedProducts(conn)
 
-	mux := http.NewServeMux()
+	r := chi.NewRouter()
 
-	http.ListenAndServe(":8080", mux)
+	productRepo := product.NewPgProductRepo(conn)
+	productService := product.NewProductService(productRepo)
+	productHandler := product.NewProductHandler(productService)
+
+	r.Mount("/products", productHandler.Routes())
+
+	http.ListenAndServe(":8080", r)
 }
